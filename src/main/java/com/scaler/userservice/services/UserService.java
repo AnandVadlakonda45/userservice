@@ -1,18 +1,20 @@
 package com.scaler.userservice.services;
 
+import com.scaler.userservice.exceptions.UserAlreadyExists;
 import com.scaler.userservice.models.Token;
 import com.scaler.userservice.models.User;
 import com.scaler.userservice.repositories.TokenRepository;
 import com.scaler.userservice.repositories.UserRepository;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.hibernate.service.spi.Stoppable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.Optional;
 
+@Service
 public class UserService {
     private UserRepository userRepository;
     private TokenRepository tokenRepository;
@@ -24,16 +26,20 @@ public class UserService {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
-    public User signup(String fullname,String email, String password){
+    public User signup(String fullname,String email, String password)throws UserAlreadyExists{
+        Optional<User> user = userRepository.findByEmail(email);
+
+        if (user.isPresent()){
+            throw new UserAlreadyExists("User already Exits with this email : " + email);
+        }
 
         User u = new User();
         u.setEmail(email);
         u.setName(fullname);
         u.setHashedPassword(bCryptPasswordEncoder.encode(password));
+        User user1 = userRepository.save(u);
 
-        User user = userRepository.save(u);
-
-        return user;
+        return user1;
     }
 
     public Token login(String email, String password){
@@ -72,10 +78,17 @@ public class UserService {
             return;
         }
         Token token1 = optionalToken.get();
-        token1.setDeletedAt(true);
+        token1.setDeleted(true);
         tokenRepository.save(token1);
 
         return;
+    }
+    public User validateToken(String token){
+        Optional<Token> token1 = tokenRepository.findByValueAndDeletedEqualsAndExpiryAtGreaterThan(token, false, new Date());
+        if (token1.isEmpty()){
+            return null;
+        }
+        return token1.get().getUser();
     }
 
 }

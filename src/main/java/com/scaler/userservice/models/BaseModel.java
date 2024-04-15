@@ -6,11 +6,10 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Entity
 @MappedSuperclass
 public class BaseModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private boolean deletedAt;
+    private boolean deleted;
 }
