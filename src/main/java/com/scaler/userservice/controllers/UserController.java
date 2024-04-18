@@ -15,7 +15,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/usersABC")
 public class UserController {
     private UserService userService;
     public UserController(UserService userService) {
@@ -28,6 +28,7 @@ public class UserController {
     }
     @PostMapping("/signup")
     public UserDto signUp(@RequestBody SignUpRequestDto requestDto) throws UserAlreadyExists {
+        System.out.println("log");
         String name = requestDto.getName();
         String password = requestDto.getPassword();
         String email = requestDto.getEmail();

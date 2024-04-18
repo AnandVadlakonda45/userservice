@@ -32,7 +32,7 @@ public class UserService {
         if (user.isPresent()){
             throw new UserAlreadyExists("User already Exits with this email : " + email);
         }
-
+        //System.out.println("for signup ");
         User u = new User();
         u.setEmail(email);
         u.setName(fullname);
