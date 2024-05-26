@@ -1,11 +1,15 @@
 package com.scaler.userservice.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.scaler.userservice.dtos.SendEmailEventDto;
 import com.scaler.userservice.exceptions.UserAlreadyExists;
 import com.scaler.userservice.models.Token;
 import com.scaler.userservice.models.User;
 import com.scaler.userservice.repositories.TokenRepository;
 import com.scaler.userservice.repositories.UserRepository;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,10 +24,16 @@ public class UserService {
     private TokenRepository tokenRepository;
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    public UserService(UserRepository userRepository, TokenRepository tokenRepository, BCryptPasswordEncoder bCryptPasswordEncoder){
+    private ObjectMapper objectMapper;
+    private KafkaTemplate kafkaTemplate;
+
+    public UserService(UserRepository userRepository, TokenRepository tokenRepository, BCryptPasswordEncoder bCryptPasswordEncoder,
+                       KafkaTemplate kafkaTemplate,ObjectMapper objectMapper){
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
     }
 
     public User signup(String fullname,String email, String password)throws UserAlreadyExists{
@@ -38,6 +48,22 @@ public class UserService {
         u.setName(fullname);
         u.setHashedPassword(bCryptPasswordEncoder.encode(password));
         User user1 = userRepository.save(u);
+
+        SendEmailEventDto sendEmailEventDto = new SendEmailEventDto();
+        sendEmailEventDto.setTo(email);
+        sendEmailEventDto.setSubject("Welcome to the club");
+        sendEmailEventDto.setBody("Thanks for signing in" +
+                "We are looking forward to you achieve your success");
+        sendEmailEventDto.setFrom("vadlakondaanand@gmail.com");
+
+        try {
+            kafkaTemplate.send(
+                    "Send Email",
+                    objectMapper.writeValueAsString(sendEmailEventDto)
+            );
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
 
         return user1;
     }

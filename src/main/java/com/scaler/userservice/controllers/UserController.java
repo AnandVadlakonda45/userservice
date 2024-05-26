@@ -7,19 +7,26 @@ import com.scaler.userservice.dtos.UserDto;
 import com.scaler.userservice.exceptions.UserAlreadyExists;
 import com.scaler.userservice.models.Token;
 import com.scaler.userservice.models.User;
+import com.scaler.userservice.repositories.UserRepository;
 import com.scaler.userservice.services.UserService;
 import jakarta.annotation.Nonnull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/usersABC")
+@RequestMapping("/users")
 public class UserController {
     private UserService userService;
-    public UserController(UserService userService) {
+    private final UserRepository userRepository;
+
+    public UserController(UserService userService,KafkaTemplate kafkaTemplate,
+                          UserRepository userRepository) {
         this.userService = userService;
+
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/login")
@@ -32,6 +39,8 @@ public class UserController {
         String name = requestDto.getName();
         String password = requestDto.getPassword();
         String email = requestDto.getEmail();
+
+
 
         return UserDto.from(userService.signup(name,email,password));
     }

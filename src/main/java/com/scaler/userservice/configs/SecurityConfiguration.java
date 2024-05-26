@@ -13,7 +13,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests((requests) -> {
                             try {
                                 requests
-                                        .anyRequest().permitAll()
+                                         .anyRequest().permitAll()
                                         .and().cors().disable()
                                         .csrf().disable();
                             } catch (Exception e) {
